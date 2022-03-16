@@ -4,7 +4,7 @@ A contract to create and merge ERC20 tokens, on the Kiln testnet.
 
 Current address: https://explorer.kiln.themerge.dev/address/0x070D6a47710BA253298b7574ED90867755620c5f
 
-Barebones UI: https://oneclickdapp.com/july-divide
+Barebones UI: https://beta.oneclickdapp.com/brenda-bonjour
 
 (will not work for "create token", as you have to send ether)
 
