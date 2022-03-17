@@ -5,10 +5,16 @@
 // You can also merge any ERC20 token.
 // The more merges, the higher the tier.
 
+// v2
+
 pragma solidity >=0.8.0;
 
-import "./ERC20.sol";
+import "./ERC20ApproveFactory.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Strings.sol";
+
+interface MintERC20 {
+    function mint(uint256 _amount) external;
+}
 
 contract Mergetok {
 
@@ -16,6 +22,7 @@ contract Mergetok {
 
     // Array of created tokens
     ERC20[] public createdTokensArray;
+    mapping(string => address) public createdTokensSymbol;
 
     // Array of seeded tokens
     address[] public seededTokensArray;
@@ -24,6 +31,7 @@ contract Mergetok {
     // Tier of a given token
     mapping(address => uint) public mergedTier;
 
+    // Owner gets all the (fake) ETH
     address payable owner;
 
     // CONSTRUCTOR
@@ -35,11 +43,16 @@ contract Mergetok {
     // EXTERNAL
 
     // ** createToken **
-    // @notice Creates a new base token
-    // @notice Tokens are minted to the sender, according to the ether value sent
+    // @notice Creates a new base token if symbol doesn't exist yet
+    // @notice Else, mint more of the existing token
+    // @notice 1M tokens minted per ether, sent to the sender
     function createToken (string memory _name, string memory _symbol) public payable {
         owner.transfer(msg.value);
-        _buildToken(_name, _symbol, msg.value);
+        if(createdTokensSymbol[_symbol] == address(0)){
+            _buildToken(_name, _symbol, msg.value * 1_000_000);
+        } else {
+            _mintToken(createdTokensSymbol[_symbol], msg.value * 1_000_000);
+        }
     }
 
     // ** mergeToken **
@@ -49,7 +62,7 @@ contract Mergetok {
     function mergeToken (address _tokenA, address _tokenB, uint256 _amount) public {
         require(_tokenA != _tokenB, "MERGETOK: can't merge a token with itself!");
 
-        // @dev this contract must be approved as a sender for both token contracts
+        // @dev tokens created from this factory don't need approval
         // @notice Spent tokens go to the contract for other users to claim and play with
         _seedToken(_tokenA, _amount);
         _seedToken(_tokenB, _amount);
@@ -59,15 +72,14 @@ contract Mergetok {
         string memory _name = string(abi.encodePacked("mergedToken Tier ", Strings.toString(_tier)));
 
         // Concatenate symbols
-        string memory _symbol = string(abi.encodePacked(IERC20Metadata(_tokenA).symbol(), IERC20Metadata(_tokenB).symbol()));
+        string memory _symbol = string(abi.encodePacked(IERC20Metadata(_tokenA).symbol(), "_", IERC20Metadata(_tokenB).symbol()));
 
         // Create new merged token
         address newMergedToken = _buildToken(_name, _symbol, _amount);
-        /*ERC20 mergedToken = new ERC20(_name, _symbol, _amount);
-        mergedTokensArray.push(mergedToken);
-        IERC20(address(mergedToken)).transfer(msg.sender, msg.value);*/
+
         // Store the tier for future merges
         mergedTier[newMergedToken] = _tier;
+
     }
 
     // ** seedToken **
@@ -75,21 +87,6 @@ contract Mergetok {
     function seedToken(address _token, uint256 _amount) public {
         _seedToken(_token, _amount);
     }
-
-    // ** claimToken **
-    // @notice Get up to 8 different tokens from the contract
-    // @notice Send a tenth of the available balance for each
-    /*
-    function claimToken() public {
-        uint256 tokenIdMin = block.number % seededTokensArray.length;
-        uint256 tokenIdMax = tokenIdMin + 8;
-        for(uint256 i = tokenIdMin; i < tokenIdMax; i++){
-            address tokenAdr = seededTokensArray[i];
-            uint256 tokenAmount = seededTokensAmount[tokenAdr] / 10;
-            seededTokensAmount[tokenAdr] -= tokenAmount;
-            IERC20(tokenAdr).transfer(tokenAdr, tokenAmount);
-        }
-    }*/
 
     // ** claimSpecificToken **
     // @notice Get a given token from the contract
@@ -115,8 +112,16 @@ contract Mergetok {
     function _buildToken (string memory _name, string memory _symbol, uint256 _amount) internal returns(address) {
         ERC20 createdToken = new ERC20(_name, _symbol, _amount);
         createdTokensArray.push(createdToken);
+        createdTokensSymbol[_symbol] = address(createdToken);
         IERC20(address(createdToken)).transfer(msg.sender, _amount);
         return(address(createdToken));
+    }
+
+    // ** _mintToken **
+    // @notice Mints more supply for an existing token
+    function _mintToken (address _token, uint256 _amount) internal {
+        MintERC20(_token).mint(_amount);
+        IERC20(_token).transfer(msg.sender, _amount);
     }
 
     // ** _seedToken **
