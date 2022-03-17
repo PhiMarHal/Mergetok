@@ -16,7 +16,9 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     string private _name;
     string private _symbol;
 
-    // The token factory (Mergetok) ignores allowance on transferFrom
+    // Token factory (Mergetok)
+    // - ignores allowance on transferFrom
+    // - has power to mint
     address public _factory;
 
     /**
@@ -33,6 +35,15 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _symbol = symbol_;
         _mint(msg.sender, mint_);
         _factory = msg.sender;
+    }
+
+    // ** mint **
+    // @notice Factory only
+
+    function mint(uint256 _amount) public {
+        require(msg.sender == _factory, "ERC20: only the Factory can mint");
+
+        _mint(msg.sender, _amount);
     }
 
     /**
