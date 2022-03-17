@@ -20,6 +20,8 @@ You'll also want to get some ether from the faucet.
 
 If the symbol you pick already exists, you will get tokens from that previously created token.
 
+Note: ETH has 18 decimals. If you want to send 1 ETH (rather than 1 wei), type "1000000000000000000" in the value field.
+
 > <b>mergeToken</b>: merges two tokens to build a new token contract, and sends you the resulting tokens.
 
 You must provide an equal amount of tokens for tokenA and tokenB.
