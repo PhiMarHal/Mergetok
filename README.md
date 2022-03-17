@@ -4,7 +4,9 @@ A contract to create and merge ERC20 tokens, on the Kiln testnet.<hr>
 
 CURRENT DEPLOYMENT: https://explorer.kiln.themerge.dev/address/0x17379798be91a5E43D0991dff565C26Ff17b4261/transactions
 
-BASIC UI: https://beta.oneclickdapp.com/garage-laser
+BASIC UI: https://beta.oneclickdapp.com/garage-laser (needed for create token, but needs a refresh after each tx)
+
+or https://oneclickdapp.com/lesson-door
 
 <hr>
 
